@@ -2,14 +2,6 @@
 title: "R Tips for the 2021 Essex Summer School"
 output: github_document
 ---
-```{css css, echo = FALSE}
-.scroll-200 {
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: inherit;
-}
-```
-
 ```{r options, echo = FALSE, cache = FALSE}
 options(width = 200)
 ```
@@ -38,7 +30,7 @@ uk_mobility_raw <- read_csv("https://covid19-static.cdn-apple.com/covid19-mobili
   transmute(region, transportation_type, across(c(`2020-01-13`:ncol(.))))
 ```
 
-```{r show uk_mobility_raw, echo = FALSE, class.output = "scroll-200"}
+```{r show uk_mobility_raw, echo = FALSE}
 uk_mobility_raw
 ```
 
@@ -51,7 +43,7 @@ uk_mobility_by_type <- uk_mobility_raw %>%
   pivot_longer(`2020-01-13`:ncol(.))
 ```
 
-```{r show uk_mobility_by_type, echo = FALSE, class.output = "scroll-200"}
+```{r show uk_mobility_by_type, echo = FALSE}
 uk_mobility_by_type
 ```
 
@@ -74,7 +66,7 @@ uk_mobility_panel <- uk_mobility_by_type %>%
   pivot_wider(names_from = "transportation_type", values_from = "traffic")
 ```
 
-```{r show pivot_wider, echo = FALSE, class.output = "scroll-200"}
+```{r show pivot_wider, echo = FALSE}
 uk_mobility_panel
 ```
 
@@ -109,7 +101,7 @@ With `uk_mobility_by_type` on hand, we now want to join it with UK's Covid-19 da
 uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv")
 ```
 
-```{r show covid data, echo = FALSE, class.output = "scroll-200"}
+```{r show covid data, echo = FALSE}
 uk_covid
 ```
 
@@ -143,7 +135,7 @@ uk_mobility_by_type %<>% mutate(transportation_type = str_to_title(transportatio
 
 <!-- ### `group_by` -->
 <!-- `uk_mobility_type` does not have data for three days. -->
-```{r show na, echo = FALSE, class.output = "scroll-200", include = FALSE}
+```{r show na, echo = FALSE, include = FALSE}
 uk_mobility_by_type %>% filter(is.na(traffic))
 ```
 
@@ -156,7 +148,7 @@ uk_mobility_by_type %<>%
 ```
 
 <!-- A section of the filled data is shown below.-->
-```{r show fill, echo = FALSE, class.output = "scroll-200", include = FALSE}
+```{r show fill, echo = FALSE, include = FALSE}
 uk_mobility_by_type %>% filter(date %in% c(ymd("2021-03-10"):ymd("2021-03-14")))
 ```
 
@@ -182,7 +174,7 @@ uk_covid %<>% group_by(areaName, date) %>%
 ```
 
 <!-- If we `group_by(areaName)` and then `summarize()`, we can easily have cumulative statistics of `newCasesByPublishDate` for each area. The code below lets us to have a look of 10 UK areas with most and least total Covid-19 cases. -->
-```{r total cases, class.output = "scroll-200", include = FALSE}
+```{r total cases, include = FALSE}
 uk_covid %>% group_by(areaName) %>%
   summarize(total_cases = sum(newCasesByPublishDate)) %>%
   arrange(desc(total_cases))
@@ -203,7 +195,7 @@ left_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
 left_join(uk_covid, uk_mobility_by_type, by = c("region", "date"))
 ```
 
-```{r show left_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+```{r show left_join, echo = FALSE, include = FALSE}
 left_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
 left_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
 ```
@@ -214,7 +206,7 @@ left_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
 left_join(uk_covid, uk_mobility_by_type, by = c("region", "date"))
 ```
 
-```{r show right_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+```{r show right_join, echo = FALSE, include = FALSE}
 right_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
 right_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
 ```
@@ -224,7 +216,7 @@ right_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summariz
 full_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
 ```
 
-```{r show full_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+```{r show full_join, echo = FALSE, include = FALSE}
 full_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region), n_distinct(date))
 ```
 
@@ -281,7 +273,7 @@ uk_mobility_covid %>% ggplot() +
 ```
 
 <!-- ## Automation -->
-```{r single reg, class.output = "scroll-200", include = FALSE}
+```{r single reg, include = FALSE}
 lalonde86 <- read_dta("http://www.nber.org/~rdehejia/data/nsw_dw.dta")
 
 controls <- c("re75", "re74", "age", "education", "nodegree", "black", "hispanic", "married")
