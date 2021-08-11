@@ -1,0 +1,349 @@
+---
+title: "R Tips for the 2021 Essex Summer School"
+output: github_document
+---
+```{css css, echo = FALSE}
+.scroll-200 {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: inherit;
+}
+```
+
+```{r options, echo = FALSE, cache = FALSE}
+options(width = 200)
+```
+
+```{r load packages, warning = FALSE, error = FALSE, message = FALSE}
+library(cowplot)
+library(estimatr)
+library(extrafont)
+library(haven)
+library(lubridate)
+library(magrittr)
+library(tidyverse)
+```
+
+```{r session info, echo = FALSE}
+c(R.version.string, sessionInfo()$running)
+```
+
+## Reshape
+This section introduces the `tidyverse` way of reshaping rectangular data.
+
+We use the [Apple Mobility Trends Reports](https://covid19.apple.com/mobility) to see how travel frequency changes during the Covid-19 pandemic across the UK. After loading the package, we import the CSV file using its URL and subset the data to cities in the UK only.
+```{r import mobility data, message = FALSE}
+uk_mobility_raw <- read_csv("https://covid19-static.cdn-apple.com/covid19-mobility-data/2114HotfixDev8/v3/en-us/applemobilitytrends-2021-08-06.csv") %>%
+  filter(country == "United Kingdom", geo_type == "city") %>%
+  transmute(region, transportation_type, across(c(`2020-01-13`:ncol(.))))
+```
+
+```{r show uk_mobility_raw, echo = FALSE, class.output = "scroll-200"}
+uk_mobility_raw
+```
+
+### `pivot_longer`
+The data is in wide format––many columns represent variable values measured at different times. But data analysis oftentimes requires long format––repeatedly measured (over time) variable values are stacked along time while a dedicated column stores the time information.
+
+`tidyr::pivot_longer()` converts rectangular data from wide to long format. When using this function, we generally need to specify the columns that are about to be stacked.
+```{r simplest pivot_longer}
+uk_mobility_by_type <- uk_mobility_raw %>%
+  pivot_longer(`2020-01-13`:ncol(.))
+```
+
+```{r show uk_mobility_by_type, echo = FALSE, class.output = "scroll-200"}
+uk_mobility_by_type
+```
+
+We can specify the names of new columns (`name` and `value`) by using two additional arguments. They further imply how the function works: it temporally expands each row in the wide data to *T* rows in the long data and uses the column names to identify which rows correspond to which column.
+```{r pivot_longer with renamed columns}
+uk_mobility_by_type <- uk_mobility_raw %>%
+  pivot_longer(`2020-01-13`:ncol(.), names_to = "date", values_to = "traffic")
+```
+
+We can use [selection helpers](https://dplyr.tidyverse.org/reference/select.html) to specify the columns to stack.
+```{r pivot_longer with selection helpers, eval = FALSE}
+uk_mobility_raw %>% pivot_longer(starts_with("20"))
+uk_mobility_raw %>% pivot_longer(contains("20"))
+```
+
+### `pivot_wider`
+Although the data is now stacked temporally, the unit of observation is `city`-`transportation_type`-`date`, so we want to have three separate variables (columns) for three specific types of transportation (driving, transit, and walking). `pivot_wider` does the opposite of what `pivot_longer` does.
+```{r pivot_longer}
+uk_mobility_panel <- uk_mobility_by_type %>%  
+  pivot_wider(names_from = "transportation_type", values_from = "traffic")
+```
+
+```{r show pivot_wider, echo = FALSE, class.output = "scroll-200"}
+uk_mobility_panel
+```
+
+The data finally has a typical panel structure––an *NT* × *K* matrix, in which *N* refers to cross-sectional sample size (16 cities), *T* refers to time-series sample size (572 days), and *K* refers to the number of variables, which is identical to the number of columns. Importantly, neither multiple columns represent one variable (`pivot_longer`) nor does a single column represent more than one variable (`pivot_wider`).
+
+## Date and String
+This section introduces the `tidyverse` way of working with date and string. Although `uk_mobility_panel` is how typical social science panel data looks like, we use `uk_mobility_by_type` from now on for convenient Grouped Visualization (5th section).
+
+### `lubridate`
+Working with date in `numeric` or `character` type when we only have yearly data is oftentimes fine. But it is better to set date as `date` when our data's temporal frequency becomes higher. Doing so ensures time-series operations are done correctly and enables us to easily extract additional time information. We see that our `date` column's format is YYYY-MM-DD, so we use `lubridate::ymd()` to transform `date` from `character` to `date`.
+```{r ymd}
+# %<>% from magrittr (not recommended by many) is used to save space
+uk_mobility_by_type %<>% mutate(date = ymd(date))
+```
+
+Likewise, we also have `mdy()` and `dmy()`. These functions handles both `numeric` and `character` objects and are versatile to detailed format differences, such as whether month is spelled out, leading zero is included, and so on.
+```{r mdy dmy}
+mdy(8102021); mdy("Jan 13 01"); dmy("1/07/1935"); dmy("1st in September in the year of 2021")
+```
+
+We may suspect that daily travel frequency is correlated with whether a day is during weekend and whether daylight saving is effective. The following two functions extract such information and create two new variables accordingly.
+```{r show lubridate more}
+uk_mobility_by_type %>% mutate(
+  which_day = wday(date, label = TRUE),
+  daylight_saving = dst(date)
+  )
+```
+
+### `stringr`
+With `uk_mobility_by_type` on hand, we now want to join it with UK's Covid-19 data. Specifically, we want an CSV file for *New Cases by Publish Date* in Upper Tier Local Authorities (UTLA).
+```{r import covid data, message = FALSE}
+uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv")
+```
+
+```{r show covid data, echo = FALSE, class.output = "scroll-200"}
+uk_covid
+```
+
+To join data, identical row(s)-unique identifiers have to be in the two datasets. `uk_mobility_by_type` does not have any standardized, code-based identifier, so we have to use city names instead. However, in `uk_covid`, Bristol is named as "Bristol, City of", Edinburgh is named as "City of Edinburgh", and Glasgow is named as "Glasgow City." The code below uses `stringr::str_detect()` to modify `areaName` (to be matched to `region` in `uk_mobility_by_type` later) in `uk_covid` according to the following rule: for the observations whose `areaName` is detected to have the string `"Bristol"`, then just name their `areaName` as Bristol; for the observations whose `areaName` is detected to have the string `"Edinburgh"`, then just name their `areaName` as Edinburgh; for the observations whose `areaName` is detected to have the string `"Glasgow"`, then just name their `areaName` as Glasgow; for the observations that do not meet any of these aforementioned conditions, keep their `areaName` unchanged.
+```{r change city names}
+uk_covid %<>% mutate(areaName = case_when(
+  str_detect(areaName, "Bristol") ~ "Bristol",
+  str_detect(areaName, "Edinburgh") ~ "Edinburgh",
+  str_detect(areaName, "Glasgow") ~ "Glasgow",
+  TRUE ~ areaName
+  ))
+```
+
+London is a single statistical unit in `uk_mobility_by_type`, but `uk_covid` provides data separately for London's 32 boroughs plus the City of London. These 33 London districts have one thing in common, though--their `areaCode` all starts with the string `"E09"`. The code below does the following: for the observations whose `areaCode` starts with the string `"E09"`, name their `areaName` as London; for the else observations, keep their `areaName` unchanged. Compared to the last chunk which changed `areaName` conditional on itself (`areaName`), this one changes `areaName` conditional on another column (`areaCode`).
+```{r change london names}
+uk_covid %<>% mutate(areaName = if_else(str_starts(areaCode, "E09"), "London", areaName))
+```
+
+The `stringr` package also have four style changers.
+```{r show style change}
+example_str <- "The `stringr` package also have four style changers"
+str_to_lower(example_str); str_to_title(example_str); str_to_upper(example_str); str_to_upper(example_str) %>% str_to_sentence()
+```
+
+```{r str_to_title}
+uk_mobility_by_type %<>% mutate(transportation_type = str_to_title(transportation_type))
+```
+
+<!-- ## Within-Group Operation -->
+<!-- Our data is substantively hierarchical (city-date panel) and organizationally grouped (each city's three `transportation_type` stored along rows). This section introduces the `tidyverse` way of doing within-group operations. -->
+
+<!-- ### `group_by` -->
+<!-- `uk_mobility_type` does not have data for three days. -->
+```{r show na, echo = FALSE, class.output = "scroll-200", include = FALSE}
+uk_mobility_by_type %>% filter(is.na(traffic))
+```
+
+<!-- Given we only have a few missing values relative to our large temporal sample size, we decide to simply carry past values forward to impute the missing values. But unless `uk_mobility_by_type` is well grouped, we may incorrectly use London's value at *t-1* for Glasgow's missing value at *t* or use *Walking* at *t-1* for the missing *Driving* at *t*. `uk_mobility_by_type` has three levels (`region`, `transportation_type`, `date`), while to fill the missing values (with `tidyr::fill()`), we only need to operate along the temporal dimension. So, we group `uk_mobility_by_type` by `region` and `transportation_type` to `fill()` within each `transportation_type` of each `city`. -->
+```{r fill, include = FALSE}
+uk_mobility_by_type %<>%
+  group_by(region, transportation_type) %>%
+  fill(traffic) %>%
+  ungroup()
+```
+
+<!-- A section of the filled data is shown below.-->
+```{r show fill, echo = FALSE, class.output = "scroll-200", include = FALSE}
+uk_mobility_by_type %>% filter(date %in% c(ymd("2021-03-10"):ymd("2021-03-14")))
+```
+
+<!-- Although we can apply time-series operators during estimation (using `plm::plm()`, for example), sometimes we may want to temporally transform our variables prior to it. `dplyr` is able to perform basic time-series operations, provided that we `group_by()` correctly. -->
+```{r time-series operators, eval = FALSE, include = FALSE}
+uk_mobility_by_type %>%
+  group_by(city, transportation_type) %>%
+  mutate(
+    traffic_lag = dplyr::lag(traffic),
+    traffic_lag2 = dplyr::lag(traffic, 2),
+    traffic_lead = dplyr::lead(traffic),
+    traffic_diff = traffic - dplyr::lag(traffic)
+  ) %>%
+  ungroup()
+```
+
+<!-- ### `group_by` and `summarize` -->
+<!-- We can further use `dplyr::summarize()` after `group_by()` to aggregate our data, according to some a certain aggregation method, to the levels we specify. In other words, we collapse all observations within the unspecified level(s) to a single one. In last section, although we renamed 33 London districts as London in `uk_covid`, London in each `date` still has 33 observations for its 33 districts. The code below adds 33 `newCasesByPublishDate` for London's 33 districts together for everyday. After that, London only has a single value for itself as a whole, just like all other cities do. -->
+```{r summarize london, message = FALSE, include = FALSE}
+uk_covid %<>% group_by(areaName, date) %>%
+  summarize(newCasesByPublishDate = sum(newCasesByPublishDate)) %>%
+  ungroup()
+```
+
+<!-- If we `group_by(areaName)` and then `summarize()`, we can easily have cumulative statistics of `newCasesByPublishDate` for each area. The code below lets us to have a look of 10 UK areas with most and least total Covid-19 cases. -->
+```{r total cases, class.output = "scroll-200", include = FALSE}
+uk_covid %>% group_by(areaName) %>%
+  summarize(total_cases = sum(newCasesByPublishDate)) %>%
+  arrange(desc(total_cases))
+
+uk_covid %>% group_by(areaName) %>%
+  summarize(total_cases = sum(newCasesByPublishDate)) %>%
+  arrange(total_cases)
+```
+
+<!-- ## Join Data by Rows -->
+```{r rename, include = FALSE}
+uk_covid %<>% rename(region = areaName)
+```
+
+<!-- ### `left_join` -->
+```{r left_join, eval = FALSE, include = FALSE}
+left_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
+left_join(uk_covid, uk_mobility_by_type, by = c("region", "date"))
+```
+
+```{r show left_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+left_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
+left_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+<!-- ### `right_join` -->
+```{r right_join, eval = FALSE, include = FALSE}
+left_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
+left_join(uk_covid, uk_mobility_by_type, by = c("region", "date"))
+```
+
+```{r show right_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+right_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
+right_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+<!-- ### `full_join` -->
+```{r full_join, eval = FALSE, include = FALSE}
+full_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
+```
+
+```{r show full_join, echo = FALSE, class.output = "scroll-200", include = FALSE}
+full_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region), n_distinct(date))
+```
+
+```{r save, include = FALSE}
+uk_mobility_covid <- left_join(uk_mobility_by_type, uk_covid, by = c("region", "date"))
+```
+
+<!-- ## Grouped Visualization -->
+```{r newcastle, include = FALSE}
+uk_mobility_covid %<>% mutate(region = if_else(str_detect(region, "Newcastle"), "Newcastle", region))
+```
+
+<!-- ### `group and facet_wrap` -->
+```{r facet_wrap, fig.align = 'center', fig.width = 20, fig.height = 15, include = FALSE}
+uk_mobility_covid %>% ggplot() + 
+  geom_line(aes(date, traffic, group = transportation_type, color = transportation_type)) +
+  facet_wrap(vars(region)) +
+  scale_x_date(date_labels="%b %y") +
+  labs(
+    x = "", y = "", 
+    title = "Daily Travel Frequency Change during the Covid-19 Pandemic in the UK", 
+    subtitle = "Baseline (13 Jan 2020) = 100; Last Updated: 06 Aug 2021",
+    caption = "Source: Apple Mobility Trends Reports"
+  ) +
+  theme_minimal_hgrid() +
+  theme(
+    text = element_text(family = "Palatino", size = 22),
+    legend.title = element_blank(),
+    strip.background = element_blank()
+  )
+```
+
+<!-- ### `facet_grid` -->
+```{r facet_grid, fig.align = 'center', fig.width = 22, fig.height = 15, include = FALSE}
+uk_mobility_covid %>% ggplot() + 
+  geom_line(aes(date, traffic)) +
+  facet_grid(cols = vars(region), rows = vars(transportation_type)) +
+  scale_x_date(date_labels="%y", date_breaks = "1 year") +
+  labs(
+    x = "", y = "", 
+    title = "Daily Travel Frequency Change during the Covid-19 Pandemic in the UK", 
+    subtitle = "Baseline (13 Jan 2020) = 100; Last Updated: 06 Aug 2021",
+    caption = "Source: Apple Mobility Trends Reports"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Palatino", size = 22),
+    legend.title = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.x = element_text(angle = 315),
+    strip.text.y = element_text(angle = 0, vjust = 0.5),
+    strip.background = element_blank()
+  )
+```
+
+<!-- ## Automation -->
+```{r single reg, class.output = "scroll-200", include = FALSE}
+lalonde86 <- read_dta("http://www.nber.org/~rdehejia/data/nsw_dw.dta")
+
+controls <- c("re75", "re74", "age", "education", "nodegree", "black", "hispanic", "married")
+
+lalonde86_fit <- lm_robust(reformulate(c("treat", controls), "re78"), data = lalonde86, se_type = "stata")
+
+tidy(lalonde86_fit)
+
+eff <- tidy(lalonde86_fit) %>% slice(2) %>% select(estimate) %>% pull()
+```
+
+```{r gen placebo, include = FALSE}
+n <- 1000
+
+set.seed(2021)
+
+lalonde86 <- rbernoulli(nrow(lalonde86) * n) %>%
+  matrix(nrow = nrow(lalonde86), ncol = n, byrow = FALSE) %>%
+  {1 * .} %>%
+  set_colnames(paste0("placebo", 1:n)) %>%
+  as_tibble() %>%
+  bind_cols(lalonde86, .)
+```
+
+```{r for loop, include = FALSE}
+est_loop <- NULL
+
+for (i in 1:n) {
+  est_loop[i] <- 
+    reformulate(c(paste0("placebo", 1:n)[i], controls), "re78") %>%
+    lm_robust(data = lalonde86, se_type = "stata") %>%
+    tidy() %>%
+    slice(2) %>%
+    select(estimate)
+  rm(i)
+  est_loop %<>% unlist()
+}
+```
+
+```{r purrr, include = FALSE}
+est_purrr <- paste0("placebo", 1:n) %>%
+  map(~ reformulate(c(., controls), "re78")) %>%
+  map(~ lm_robust(., data = lalonde86, se_type = "stata")) %>%
+  map(tidy) %>%
+  map(slice, 2) %>%
+  map_dfr(select, estimate)
+```
+
+```{r placebo density, fig.align = 'center', fig.width = 5, fig.height = 5, include = FALSE}
+est_purrr %>%
+  mutate(cilow = quantile(estimate, 0.025), cihigh = quantile(estimate, 0.975)) %>%
+  ggplot() + geom_density(aes(estimate, ..scaled..), stat = "density") +
+  geom_errorbar(aes(xmin = cilow, xmax = cihigh, y = 0), size = 0.5, width = 0.05) +
+  geom_vline(xintercept = eff, linetype = "dashed") +
+  labs(
+    x = "Estimates of Placebos (95% CI)", y = "Density", 
+    caption = "Dashed segment denotes treatment effect estimate.\n Replications = 1,000."
+  ) +
+  theme_minimal_grid() +
+  theme(
+    text = element_text(family = "Palatino"),
+    axis.title.x = element_text(margin = margin(15, 0, 0, 0)),
+    axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(0, 15, 0, 0))
+  )
+```
