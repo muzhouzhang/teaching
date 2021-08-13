@@ -13,7 +13,7 @@ library(tidyverse)
 
     ## [1] "R version 4.1.0 (2021-05-18)" "macOS Big Sur 10.16"
 
-## Reshape
+## 1 Reshape
 
 This section introduces the `tidyverse` way of reshaping rectangular
 data.
@@ -141,12 +141,12 @@ variables, which is identical to the number of columns. Importantly,
 neither multiple columns represent one variable (`pivot_longer`) nor
 does a single column represent more than one variable (`pivot_wider`).
 
-## Date and String
+## 2 Date and String
 
 This section introduces the `tidyverse` way of working with date and
 string. Although `uk_mobility_panel` is how typical social science panel
 data looks like, we use `uk_mobility_by_type` from now on for convenient
-Grouped Visualization (5th section).
+Grouped Visualization (section 5).
 
 ### `lubridate`
 
@@ -217,36 +217,36 @@ Publish Date* in Upper Tier Local Authorities (UTLA).
 uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv")
 ```
 
-    ## # A tibble: 97,093 x 5
+    ## # A tibble: 97,521 x 5
     ##    areaCode  areaName                  areaType date       newCasesByPublishDate
     ##    <chr>     <chr>                     <chr>    <date>                     <dbl>
-    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-10                    60
-    ##  2 E06000014 York                      utla     2021-08-10                    71
-    ##  3 E06000050 Cheshire West and Chester utla     2021-08-10                   110
-    ##  4 E08000001 Bolton                    utla     2021-08-10                    69
-    ##  5 E08000016 Barnsley                  utla     2021-08-10                   125
-    ##  6 E08000031 Wolverhampton             utla     2021-08-10                    94
-    ##  7 E08000032 Bradford                  utla     2021-08-10                   193
-    ##  8 E09000018 Hounslow                  utla     2021-08-10                   110
-    ##  9 E09000032 Wandsworth                utla     2021-08-10                   124
-    ## 10 E09000033 Westminster               utla     2021-08-10                    69
-    ## # … with 97,083 more rows
+    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-12                    78
+    ##  2 E06000014 York                      utla     2021-08-12                   103
+    ##  3 E06000050 Cheshire West and Chester utla     2021-08-12                   151
+    ##  4 E08000001 Bolton                    utla     2021-08-12                   108
+    ##  5 E08000016 Barnsley                  utla     2021-08-12                   139
+    ##  6 E08000031 Wolverhampton             utla     2021-08-12                   137
+    ##  7 E08000032 Bradford                  utla     2021-08-12                   277
+    ##  8 E09000018 Hounslow                  utla     2021-08-12                    97
+    ##  9 E09000032 Wandsworth                utla     2021-08-12                   148
+    ## 10 E09000033 Westminster               utla     2021-08-12                   100
+    ## # … with 97,511 more rows
 
-To join data, identical row(s)-unique identifiers have to be in the two
-datasets. `uk_mobility_by_type` does not have any standardized,
-code-based identifier, so we have to use city names instead. However, in
+To join data, identical row identifiers have to be in the two datasets.
+`uk_mobility_by_type` does not have any standardized, code-based
+identifier, so we have to use city names instead. However, in
 `uk_covid`, Bristol is named as “Bristol, City of”, Edinburgh is named
 as “City of Edinburgh”, and Glasgow is named as “Glasgow City.” The code
 below uses `stringr::str_detect()` to modify `areaName` (to be matched
 to `region` in `uk_mobility_by_type` later) in `uk_covid` according to
 the following rule: for the observations whose `areaName` is detected to
-have the string `"Bristol"`, then just name their `areaName` as Bristol;
-for the observations whose `areaName` is detected to have the string
-`"Edinburgh"`, then just name their `areaName` as Edinburgh; for the
-observations whose `areaName` is detected to have the string
-`"Glasgow"`, then just name their `areaName` as Glasgow; for the
-observations that do not meet any of these aforementioned conditions,
-keep their `areaName` unchanged.
+have the string `"Bristol"`, then just name their `areaName` as
+`"Bristol"`; for the observations whose `areaName` is detected to have
+the string `"Edinburgh"`, then just name their `areaName` as
+`"Edinburgh"`; for the observations whose `areaName` is detected to have
+the string `"Glasgow"`, then just name their `areaName` as `"Glasgow"`;
+for the observations that do not meet any of these aforementioned
+conditions, keep their `areaName` unchanged.
 
 ``` r
 uk_covid %<>% mutate(areaName = case_when(
@@ -290,21 +290,170 @@ str_to_lower(example_str); str_to_title(example_str); str_to_upper(example_str);
 uk_mobility_by_type %<>% mutate(transportation_type = str_to_title(transportation_type))
 ```
 
-<!-- ## Within-Group Operation -->
-<!-- Our data is substantively hierarchical (city-date panel) and organizationally grouped (each city's three `transportation_type` stored along rows). This section introduces the `tidyverse` way of doing within-group operations. -->
-<!-- ### `group_by` -->
-<!-- `uk_mobility_type` does not have data for three days. -->
-<!-- Given we only have a few missing values relative to our large temporal sample size, we decide to simply carry past values forward to impute the missing values. But unless `uk_mobility_by_type` is well grouped, we may incorrectly use London's value at *t-1* for Glasgow's missing value at *t* or use *Walking* at *t-1* for the missing *Driving* at *t*. `uk_mobility_by_type` has three levels (`region`, `transportation_type`, `date`), while to fill the missing values (with `tidyr::fill()`), we only need to operate along the temporal dimension. So, we group `uk_mobility_by_type` by `region` and `transportation_type` to `fill()` within each `transportation_type` of each `city`. -->
-<!-- A section of the filled data is shown below.-->
-<!-- Although we can apply time-series operators during estimation (using `plm::plm()`, for example), sometimes we may want to temporally transform our variables prior to it. `dplyr` is able to perform basic time-series operations, provided that we `group_by()` correctly. -->
-<!-- ### `group_by` and `summarize` -->
-<!-- We can further use `dplyr::summarize()` after `group_by()` to aggregate our data, according to some a certain aggregation method, to the levels we specify. In other words, we collapse all observations within the unspecified level(s) to a single one. In last section, although we renamed 33 London districts as London in `uk_covid`, London in each `date` still has 33 observations for its 33 districts. The code below adds 33 `newCasesByPublishDate` for London's 33 districts together for everyday. After that, London only has a single value for itself as a whole, just like all other cities do. -->
-<!-- If we `group_by(areaName)` and then `summarize()`, we can easily have cumulative statistics of `newCasesByPublishDate` for each area. The code below lets us to have a look of 10 UK areas with most and least total Covid-19 cases. -->
+## 3 Within-Group Operation
+
+`uk_mobility_by_type` and `uk_covid` are substantively grouped (panel
+data). Further, `uk_mobility_by_type` is organizationally grouped too
+(three `transportation_type` within each `region`-`date`). This section
+introduces the `tidyverse` way of doing within-group operations.
+
+### `group_by`
+
+`uk_mobility_type` does not have data for three days. Given we only have
+a few missing values relative to our large temporal sample size, we
+decide to simply carry past values forward to impute them.
+
+    ## # A tibble: 144 x 4
+    ##    region     transportation_type date       traffic
+    ##    <chr>      <chr>               <date>       <dbl>
+    ##  1 Belfast    Driving             2020-05-11      NA
+    ##  2 Belfast    Driving             2020-05-12      NA
+    ##  3 Belfast    Driving             2021-03-12      NA
+    ##  4 Belfast    Transit             2020-05-11      NA
+    ##  5 Belfast    Transit             2020-05-12      NA
+    ##  6 Belfast    Transit             2021-03-12      NA
+    ##  7 Belfast    Walking             2020-05-11      NA
+    ##  8 Belfast    Walking             2020-05-12      NA
+    ##  9 Belfast    Walking             2021-03-12      NA
+    ## 10 Birmingham Driving             2020-05-11      NA
+    ## # … with 134 more rows
+
+But unless correctly grouping `uk_mobility_by_type` in R, we may use
+London’s value at *t-1* for Glasgow’s missing value at *t* or use
+Walking at *t-1* for the missing Driving at *t*. `uk_mobility_by_type`
+has three levels (`region`, `transportation_type`, `date`), while to
+fill the missing values (with `tidyr::fill()`), we only need to operate
+across `date`. So, we group `uk_mobility_by_type` by `region` and
+`transportation_type` to `fill()` within each `transportation_type` of
+each `city`.
+
+``` r
+uk_mobility_by_type %<>%
+  group_by(region, transportation_type) %>%
+  fill(traffic) %>%
+  ungroup()
+```
+
+The chunk below shows a section of the filled data.
+
+    ## # A tibble: 240 x 4
+    ##    region  transportation_type date       traffic
+    ##    <chr>   <chr>               <date>       <dbl>
+    ##  1 Belfast Driving             2021-03-10    91.8
+    ##  2 Belfast Driving             2021-03-11    95.3
+    ##  3 Belfast Driving             2021-03-12    95.3
+    ##  4 Belfast Driving             2021-03-13   110. 
+    ##  5 Belfast Driving             2021-03-14    72.3
+    ##  6 Belfast Transit             2021-03-10    37.5
+    ##  7 Belfast Transit             2021-03-11    36.2
+    ##  8 Belfast Transit             2021-03-12    36.2
+    ##  9 Belfast Transit             2021-03-13    44.2
+    ## 10 Belfast Transit             2021-03-14    27.5
+    ## # … with 230 more rows
+
+Although we can apply time-series operators during estimation (using
+`plm::plm()`, for example), sometimes we may want to temporally
+transform our variables prior to it. `dplyr` has some functions to
+perform basic time-series operations, but again, we need to make sure
+that we `group_by()` correctly.
+
+``` r
+uk_mobility_by_type %>%
+  group_by(city, transportation_type) %>%
+  mutate(
+    traffic_lag = dplyr::lag(traffic),
+    traffic_lag2 = dplyr::lag(traffic, 2),
+    traffic_lead = dplyr::lead(traffic),
+    traffic_diff = traffic - dplyr::lag(traffic)
+  ) %>%
+  ungroup()
+```
+
+### `group_by` and `summarize`
+
+We can further use `dplyr::summarize()` after `group_by()` to aggregate
+our data, according to the aggregation method we specify, to the levels
+we set. In other words, we collapse all observations within the
+specified group to a single one. In section 2, although we renamed 33
+London districts as London in `uk_covid`, London within each `date`
+still has 33 observations for its 33 districts. The code below adds 33
+`newCasesByPublishDate` for London’s 33 districts together for everyday.
+After that, London only has a single observation for itself as a whole
+on a given day, just like all other cities do.
+
+``` r
+uk_covid %<>% group_by(areaName, date) %>%
+  summarize(newCasesByPublishDate = sum(newCasesByPublishDate)) %>%
+  ungroup()
+```
+
+`summarize()` is useful to show unit-specific summary statistics. If we
+`group_by(areaName)` and then `summarize()`, we can easily have
+cumulative statistics of `newCasesByPublishDate` for each area. The code
+below lets us know the 10 UK Upper Tier Local Authorities with the most
+and least total Covid-19 cases.
+
+``` r
+uk_covid %>% group_by(areaName) %>%
+  summarize(total_cases = sum(newCasesByPublishDate)) %>%
+  arrange(desc(total_cases))
+```
+
+    ## # A tibble: 183 x 2
+    ##    areaName      total_cases
+    ##    <chr>               <dbl>
+    ##  1 London             915227
+    ##  2 Essex              144899
+    ##  3 Lancashire         142642
+    ##  4 Kent               142314
+    ##  5 Birmingham         135059
+    ##  6 Hertfordshire      105310
+    ##  7 Leeds               94685
+    ##  8 Surrey              93778
+    ##  9 Hampshire           89681
+    ## 10 Staffordshire       80439
+    ## # … with 173 more rows
+
+``` r
+uk_covid %>% group_by(areaName) %>%
+  summarize(total_cases = sum(newCasesByPublishDate)) %>%
+  arrange(total_cases)
+```
+
+    ## # A tibble: 183 x 2
+    ##    areaName           total_cases
+    ##    <chr>                    <dbl>
+    ##  1 Orkney Islands             165
+    ##  2 Shetland Islands           365
+    ##  3 Na h-Eileanan Siar         465
+    ##  4 Ceredigion                2238
+    ##  5 Rutland                   2458
+    ##  6 Moray                     2478
+    ##  7 Argyll and Bute           2574
+    ##  8 Isle of Anglesey          2714
+    ##  9 Clackmannanshire          3446
+    ## 10 Pembrokeshire             4081
+    ## # … with 173 more rows
+
 <!-- ## Join Data by Rows -->
-<!-- ### `left_join` -->
+<!-- This section introduces the `tidyverse` way of joining data. First, we `rename` `areaName` in `uk_covid` as `region` so that row identifiers in the two datasets have the same name, which is a necessary condition to joining data successfully. -->
+<!-- ### `left_join()` -->
+<!-- The primary difference between various `dplyr` functions for joining data is how they deal with unmatched observations. In our example, `uk_mobility_by_type` only has 16 cities while `uk_covid` includes all Upper Tier Local Authorities in the country. Thus, the majority of observations in `uk_covid` cannot be matched. For `left_join(x, y)`, all observation in `x` (the left one) remains but all unmatched observations in `y` (the right one) are dropped. In comparison, for `left_join(y, x)`, all observations in `y` (the left one) remains but all unmatched observations in `x` (the right one) are dropped. Clearly, when applying `left_join()`, changing the relative position of the two datasets gives us opposite results. As we can see from the chunk below, when `uk_mobility_by_type` is on the left, the returned data only 16 regions since all regions in `uk_covid` but not included in `uk_mobility_by_type` are excluded from the joined data. In the opposite, all regions, no matter whether they in `uk_mobility_by_type` or not, are kept when `uk_covid` is on the left. -->
 <!-- ### `right_join` -->
+<!-- For `right_join(x, y)`, all observation in `y` (the right one) remains but all unmatched observations in `x` (the left one) are dropped. Obviously, the result of `right_join()` is opposite to what `left_join()` returns. We also saw from last subsection that we can also have opposite joining results by changing which data is on the left while which is on the right. Actually, `left_join(x, y)` = `right_join(y, x)` while `left_join(y, x)` = `right_join(x, y)`, holding all other arguments constant. -->
 <!-- ### `full_join` -->
+<!-- Neither of the four function shown above maximizes the number of observations kept in the joined data. We try to join the data on two dimensions (`region` and `date`), but in fact, the data with most regions (`uk_covid`) has fewer days. To keep as many observations as possible in the joined data, we can then use `full_join()`, which drops nothing. -->
 <!-- ## Grouped Visualization -->
+<!-- This section introduces the `tidyverse` way of making grouped visualization. Specifically, we want a time-seris plot showing the travel frequency change (`traffic`) by three `transportation_type` by 16 cities (`region`). -->
 <!-- ### `group and facet_wrap` -->
+<!-- If we simply used `geom_line(aes(date, traffic))`, then we would have 48 lines wrapped together. To distinguish different `transportation_type`, we can use `transportation_type`-specific aesthetics. In the code below, three lines for each `transportation_type` are assigned to unique colors to make them mutually distinguishable (`color = transportation_type`). Alternatively, we can use `linetype = transportation_type` (straight, dotted, dashed, etc.), but given the three lines are close to each other, this is not the preferred one. It is important to note that this group setting must be inside of `aes()`. Similarly, we can apply this soft of grouping setting to other types of plot. If we do scatter plot (`geom_point()`), for example, we can use different `shape` for different groups. -->
+<!-- We can then use `facet_wrap()` to have have a multi-panel figure, in which each panel represents the group we set. Here, we specify `vars(region)` to let panels represent different `region`. Given we have 16 cities, 4 × 4 is a natural choice regarding how many should be along rows and columns. However, we are allowed to adjust these parameters by setting `nrow` or `ncol` inside of `facet_wrap()`. -->
 <!-- ### `facet_grid` -->
+<!-- Compared to `facet_wrap()`, `facet_wrap()` is able to visualize data by two group settings along two axes. In our case, it can plot by different `region` along columns and by different `transportation_type` by rows, or *vice versa*. Then, we do not need to use different aesthetics for different `transportation_type` and accordingly, there is only a single line (rather than three) within each panel. -->
 <!-- ## Automation -->
+<!-- We've already used some functions to automate our workflow. For instance, we directly imported the CSV files from their URLs rather than manually clicking, downloading, moving, and importing. We also applied selection helpers to select the columns we want to work with rather than individually typing their column names. This section introduces how to automate iterative work using a completely new example. -->
+<!-- ### Old Data, New `lm()` -->
+<!-- We use the famous [https://www.jstor.org/stable/1806062](Lalonde (1986)) data, which is a benchmark dataset among matching method articles. The outcome variable is workers' earnings in 1978 `re78`; the binary treatment is the participation of a employment training program (`treat`); we also have a battery of demographic covariates. We use `haven::read_dta()` to import the data from one of its repositories. Then, we save the names of our control variables as a vector for later use. -->
+<!-- Let's just use least squares to estimate the treatment effect. Instead of `lm()` in base R, we use `estimatr::lm_robust()`, which is tidier and faster. As the argument `se_type = "stata"` implies, by using `lm_robust`, we can have our model estimates and robust standard errors simultaneously rather than estimating model first and adjusting the variance-covariance matrix later. In the code below, we use the function `reformulate()` to write our regression equation down (`reformulate(c(x1, x2), y)` returns `y ~ x1 + x2`). `broom::tidy()` does a tidier job than `summary()`, so we can use the `tidyverse` approach to work with model estimates and statistics more easily. Here, we extract the treatment effect estimate and save it for later use. -->
+<!-- ### Task -->
+<!-- Some applied researchers use placebo test to show that their estimates are reflective of the actual treatment effect. They randomly generate and assign pseudo treatment (which is not expected to have any systematic relationship with the outcome variable) to observations in data, estimate the effect of pseudo treatment, and replicate the process many times. If the estimates of pseudo treatment are not centered around zero, then the estimated (actual) treatment effect might be questionable since if whatever enters the model have an effect, then there is nothing special about the (actual) treatment. In other words, it might be the case that the empirical model is just a "effect producer." -->
