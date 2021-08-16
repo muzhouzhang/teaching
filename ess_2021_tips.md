@@ -217,20 +217,20 @@ Publish Date* in Upper Tier Local Authorities (UTLA).
 uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv")
 ```
 
-    ## # A tibble: 97,521 x 5
+    ## # A tibble: 98,163 x 5
     ##    areaCode  areaName                  areaType date       newCasesByPublishDate
     ##    <chr>     <chr>                     <chr>    <date>                     <dbl>
-    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-12                    78
-    ##  2 E06000014 York                      utla     2021-08-12                   103
-    ##  3 E06000050 Cheshire West and Chester utla     2021-08-12                   151
-    ##  4 E08000001 Bolton                    utla     2021-08-12                   108
-    ##  5 E08000016 Barnsley                  utla     2021-08-12                   139
-    ##  6 E08000031 Wolverhampton             utla     2021-08-12                   137
-    ##  7 E08000032 Bradford                  utla     2021-08-12                   277
-    ##  8 E09000018 Hounslow                  utla     2021-08-12                    97
-    ##  9 E09000032 Wandsworth                utla     2021-08-12                   148
-    ## 10 E09000033 Westminster               utla     2021-08-12                   100
-    ## # … with 97,511 more rows
+    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-15                    47
+    ##  2 E06000014 York                      utla     2021-08-15                    97
+    ##  3 E06000050 Cheshire West and Chester utla     2021-08-15                   131
+    ##  4 E08000001 Bolton                    utla     2021-08-15                    71
+    ##  5 E08000016 Barnsley                  utla     2021-08-15                   141
+    ##  6 E08000031 Wolverhampton             utla     2021-08-15                   123
+    ##  7 E08000032 Bradford                  utla     2021-08-15                   236
+    ##  8 E09000018 Hounslow                  utla     2021-08-15                   124
+    ##  9 E09000032 Wandsworth                utla     2021-08-15                   138
+    ## 10 E09000033 Westminster               utla     2021-08-15                    79
+    ## # … with 98,153 more rows
 
 To join data, identical row identifiers have to be in the two datasets.
 `uk_mobility_by_type` does not have any standardized, code-based
@@ -400,18 +400,18 @@ uk_covid %>% group_by(areaName) %>%
 ```
 
     ## # A tibble: 183 x 2
-    ##    areaName      total_cases
-    ##    <chr>               <dbl>
-    ##  1 London             915227
-    ##  2 Essex              144899
-    ##  3 Lancashire         142642
-    ##  4 Kent               142314
-    ##  5 Birmingham         135059
-    ##  6 Hertfordshire      105310
-    ##  7 Leeds               94685
-    ##  8 Surrey              93778
-    ##  9 Hampshire           89681
-    ## 10 Staffordshire       80439
+    ##    areaName        total_cases
+    ##    <chr>                 <dbl>
+    ##  1 London               926503
+    ##  2 Essex                146403
+    ##  3 Kent                 144139
+    ##  4 Lancashire           144126
+    ##  5 Birmingham           136775
+    ##  6 Hertfordshire        106894
+    ##  7 Leeds                 96077
+    ##  8 Surrey                95345
+    ##  9 Hampshire             91442
+    ## 10 Nottinghamshire       81646
     ## # … with 173 more rows
 
 ``` r
@@ -423,26 +423,117 @@ uk_covid %>% group_by(areaName) %>%
     ## # A tibble: 183 x 2
     ##    areaName           total_cases
     ##    <chr>                    <dbl>
-    ##  1 Orkney Islands             165
-    ##  2 Shetland Islands           365
-    ##  3 Na h-Eileanan Siar         465
-    ##  4 Ceredigion                2238
-    ##  5 Rutland                   2458
-    ##  6 Moray                     2478
-    ##  7 Argyll and Bute           2574
-    ##  8 Isle of Anglesey          2714
-    ##  9 Clackmannanshire          3446
-    ## 10 Pembrokeshire             4081
+    ##  1 Orkney Islands             169
+    ##  2 Shetland Islands           366
+    ##  3 Na h-Eileanan Siar         483
+    ##  4 Ceredigion                2274
+    ##  5 Rutland                   2497
+    ##  6 Moray                     2514
+    ##  7 Argyll and Bute           2660
+    ##  8 Isle of Anglesey          2739
+    ##  9 Clackmannanshire          3498
+    ## 10 Pembrokeshire             4176
     ## # … with 173 more rows
 
-<!-- ## Join Data by Rows -->
-<!-- This section introduces the `tidyverse` way of joining data. First, we `rename` `areaName` in `uk_covid` as `region` so that row identifiers in the two datasets have the same name, which is a necessary condition to joining data successfully. -->
-<!-- ### `left_join()` -->
-<!-- The primary difference between various `dplyr` functions for joining data is how they deal with unmatched observations. In our example, `uk_mobility_by_type` only has 16 cities while `uk_covid` includes all Upper Tier Local Authorities in the country. Thus, the majority of observations in `uk_covid` cannot be matched. For `left_join(x, y)`, all observation in `x` (the left one) remains but all unmatched observations in `y` (the right one) are dropped. In comparison, for `left_join(y, x)`, all observations in `y` (the left one) remains but all unmatched observations in `x` (the right one) are dropped. Clearly, when applying `left_join()`, changing the relative position of the two datasets gives us opposite results. As we can see from the chunk below, when `uk_mobility_by_type` is on the left, the returned data only 16 regions since all regions in `uk_covid` but not included in `uk_mobility_by_type` are excluded from the joined data. In the opposite, all regions, no matter whether they in `uk_mobility_by_type` or not, are kept when `uk_covid` is on the left. -->
-<!-- ### `right_join` -->
-<!-- For `right_join(x, y)`, all observation in `y` (the right one) remains but all unmatched observations in `x` (the left one) are dropped. Obviously, the result of `right_join()` is opposite to what `left_join()` returns. We also saw from last subsection that we can also have opposite joining results by changing which data is on the left while which is on the right. Actually, `left_join(x, y)` = `right_join(y, x)` while `left_join(y, x)` = `right_join(x, y)`, holding all other arguments constant. -->
-<!-- ### `full_join` -->
-<!-- Neither of the four function shown above maximizes the number of observations kept in the joined data. We try to join the data on two dimensions (`region` and `date`), but in fact, the data with most regions (`uk_covid`) has fewer days. To keep as many observations as possible in the joined data, we can then use `full_join()`, which drops nothing. -->
+## 4 Join Data by Rows
+
+This section introduces the `tidyverse` way of joining data. First, we
+`rename` `areaName` in `uk_covid` as `region` so that row identifiers in
+the two datasets have the same name, which is a necessary condition to
+joining data successfully.
+
+``` r
+uk_covid %<>% rename(region = areaName)
+```
+
+### `left_join()`
+
+The primary difference between various `dplyr` functions for joining
+data is how they deal with unmatched observations. In our example,
+`uk_mobility_by_type` only has 16 cities while `uk_covid` includes all
+Upper Tier Local Authorities in the country. Thus, the majority of
+observations in `uk_covid` cannot be matched. For `left_join(x, y)`, all
+observation in `x` (the left one) remains but all unmatched observations
+in `y` (the right one) are dropped. In comparison, for
+`left_join(y, x)`, all observations in `y` (the left one) remains but
+all unmatched observations in `x` (the right one) are dropped. Clearly,
+when applying `left_join()`, changing the relative position of the two
+datasets gives us opposite results. As we can see from the chunk below,
+when `uk_mobility_by_type` is on the left, the returned data only 16
+regions since all regions in `uk_covid` but not included in
+`uk_mobility_by_type` are excluded from the joined data. In the
+opposite, all regions, no matter whether they in `uk_mobility_by_type`
+or not, are kept when `uk_covid` is on the left.
+
+``` r
+left_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+    ## # A tibble: 1 x 1
+    ##   `n_distinct(region)`
+    ##                  <int>
+    ## 1                   16
+
+``` r
+left_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+    ## # A tibble: 1 x 1
+    ##   `n_distinct(region)`
+    ##                  <int>
+    ## 1                  183
+
+### `right_join`
+
+For `right_join(x, y)`, all observation in `y` (the right one) remains
+but all unmatched observations in `x` (the left one) are dropped.
+Obviously, the result of `right_join()` is opposite to what
+`left_join()` returns. We also saw from last subsection that we can also
+have opposite joining results by changing which data is on the left
+while which is on the right. Actually, `left_join(x, y)` =
+`right_join(y, x)` while `left_join(y, x)` = `right_join(x, y)`, holding
+all other arguments constant.
+
+``` r
+right_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+    ## # A tibble: 1 x 1
+    ##   `n_distinct(region)`
+    ##                  <int>
+    ## 1                  183
+
+``` r
+right_join(uk_covid, uk_mobility_by_type, by = c("region", "date")) %>% summarize(n_distinct(region))
+```
+
+    ## # A tibble: 1 x 1
+    ##   `n_distinct(region)`
+    ##                  <int>
+    ## 1                   16
+
+### `full_join`
+
+Neither of the four function shown above maximizes the number of
+observations kept in the joined data. We try to join the data on two
+dimensions (`region` and `date`), but in fact, the data with most
+regions (`uk_covid`) has fewer days. To keep as many observations as
+possible in the joined data, we can then use `full_join()`, which drops
+nothing.
+
+``` r
+full_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize(n_distinct(region), n_distinct(date))
+```
+
+    ## # A tibble: 1 x 2
+    ##   `n_distinct(region)` `n_distinct(date)`
+    ##                  <int>              <int>
+    ## 1                  183                581
+
+``` r
+uk_mobility_covid <- left_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) # this is our finally joined data
+```
+
 <!-- ## Grouped Visualization -->
 <!-- This section introduces the `tidyverse` way of making grouped visualization. Specifically, we want a time-seris plot showing the travel frequency change (`traffic`) by three `transportation_type` by 16 cities (`region`). -->
 <!-- ### `group and facet_wrap` -->
