@@ -214,23 +214,23 @@ Covid-19 data. Specifically, we want an CSV file for *New Cases by
 Publish Date* in Upper Tier Local Authorities (UTLA).
 
 ``` r
-uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv")
+uk_covid <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=utla&metric=newCasesByPublishDate&format=csv&release=2021-08-11")
 ```
 
-    ## # A tibble: 98,163 x 5
+    ## # A tibble: 97,307 x 5
     ##    areaCode  areaName                  areaType date       newCasesByPublishDate
     ##    <chr>     <chr>                     <chr>    <date>                     <dbl>
-    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-15                    47
-    ##  2 E06000014 York                      utla     2021-08-15                    97
-    ##  3 E06000050 Cheshire West and Chester utla     2021-08-15                   131
-    ##  4 E08000001 Bolton                    utla     2021-08-15                    71
-    ##  5 E08000016 Barnsley                  utla     2021-08-15                   141
-    ##  6 E08000031 Wolverhampton             utla     2021-08-15                   123
-    ##  7 E08000032 Bradford                  utla     2021-08-15                   236
-    ##  8 E09000018 Hounslow                  utla     2021-08-15                   124
-    ##  9 E09000032 Wandsworth                utla     2021-08-15                   138
-    ## 10 E09000033 Westminster               utla     2021-08-15                    79
-    ## # … with 98,153 more rows
+    ##  1 E06000003 Redcar and Cleveland      utla     2021-08-11                    78
+    ##  2 E06000014 York                      utla     2021-08-11                   112
+    ##  3 E06000050 Cheshire West and Chester utla     2021-08-11                   116
+    ##  4 E08000001 Bolton                    utla     2021-08-11                    77
+    ##  5 E08000016 Barnsley                  utla     2021-08-11                   129
+    ##  6 E08000031 Wolverhampton             utla     2021-08-11                   142
+    ##  7 E08000032 Bradford                  utla     2021-08-11                   286
+    ##  8 E09000018 Hounslow                  utla     2021-08-11                   105
+    ##  9 E09000032 Wandsworth                utla     2021-08-11                   141
+    ## 10 E09000033 Westminster               utla     2021-08-11                    95
+    ## # … with 97,297 more rows
 
 To join data, identical row identifiers have to be in the two datasets.
 `uk_mobility_by_type` does not have any standardized, code-based
@@ -400,18 +400,18 @@ uk_covid %>% group_by(areaName) %>%
 ```
 
     ## # A tibble: 183 x 2
-    ##    areaName        total_cases
-    ##    <chr>                 <dbl>
-    ##  1 London               926503
-    ##  2 Essex                146403
-    ##  3 Kent                 144139
-    ##  4 Lancashire           144126
-    ##  5 Birmingham           136775
-    ##  6 Hertfordshire        106894
-    ##  7 Leeds                 96077
-    ##  8 Surrey                95345
-    ##  9 Hampshire             91442
-    ## 10 Nottinghamshire       81646
+    ##    areaName      total_cases
+    ##    <chr>               <dbl>
+    ##  1 London             911222
+    ##  2 Essex              144345
+    ##  3 Lancashire         142078
+    ##  4 Kent               141630
+    ##  5 Birmingham         134580
+    ##  6 Hertfordshire      104674
+    ##  7 Leeds               94144
+    ##  8 Surrey              93297
+    ##  9 Hampshire           89092
+    ## 10 Staffordshire       80036
     ## # … with 173 more rows
 
 ``` r
@@ -423,16 +423,16 @@ uk_covid %>% group_by(areaName) %>%
     ## # A tibble: 183 x 2
     ##    areaName           total_cases
     ##    <chr>                    <dbl>
-    ##  1 Orkney Islands             169
-    ##  2 Shetland Islands           366
-    ##  3 Na h-Eileanan Siar         483
-    ##  4 Ceredigion                2274
-    ##  5 Rutland                   2497
-    ##  6 Moray                     2514
-    ##  7 Argyll and Bute           2660
-    ##  8 Isle of Anglesey          2739
-    ##  9 Clackmannanshire          3498
-    ## 10 Pembrokeshire             4176
+    ##  1 Orkney Islands             164
+    ##  2 Shetland Islands           363
+    ##  3 Na h-Eileanan Siar         463
+    ##  4 Ceredigion                2199
+    ##  5 Rutland                   2452
+    ##  6 Moray                     2469
+    ##  7 Argyll and Bute           2537
+    ##  8 Isle of Anglesey          2687
+    ##  9 Clackmannanshire          3424
+    ## 10 Pembrokeshire             4025
     ## # … with 173 more rows
 
 ## 4 Join Data by Rows
@@ -528,23 +528,91 @@ full_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) %>% summarize
     ## # A tibble: 1 x 2
     ##   `n_distinct(region)` `n_distinct(date)`
     ##                  <int>              <int>
-    ## 1                  183                581
+    ## 1                  183                577
 
 ``` r
 uk_mobility_covid <- left_join(uk_mobility_by_type, uk_covid, by = c("region", "date")) # this is our finally joined data
 ```
 
-<!-- ## Grouped Visualization -->
-<!-- This section introduces the `tidyverse` way of making grouped visualization. Specifically, we want a time-seris plot showing the travel frequency change (`traffic`) by three `transportation_type` by 16 cities (`region`). -->
-<!-- ### `group and facet_wrap` -->
-<!-- If we simply used `geom_line(aes(date, traffic))`, then we would have 48 lines wrapped together. To distinguish different `transportation_type`, we can use `transportation_type`-specific aesthetics. In the code below, three lines for each `transportation_type` are assigned to unique colors to make them mutually distinguishable (`color = transportation_type`). Alternatively, we can use `linetype = transportation_type` (straight, dotted, dashed, etc.), but given the three lines are close to each other, this is not the preferred one. It is important to note that this group setting must be inside of `aes()`. Similarly, we can apply this soft of grouping setting to other types of plot. If we do scatter plot (`geom_point()`), for example, we can use different `shape` for different groups. -->
-<!-- We can then use `facet_wrap()` to have have a multi-panel figure, in which each panel represents the group we set. Here, we specify `vars(region)` to let panels represent different `region`. Given we have 16 cities, 4 × 4 is a natural choice regarding how many should be along rows and columns. However, we are allowed to adjust these parameters by setting `nrow` or `ncol` inside of `facet_wrap()`. -->
-<!-- ### `facet_grid` -->
-<!-- Compared to `facet_wrap()`, `facet_wrap()` is able to visualize data by two group settings along two axes. In our case, it can plot by different `region` along columns and by different `transportation_type` by rows, or *vice versa*. Then, we do not need to use different aesthetics for different `transportation_type` and accordingly, there is only a single line (rather than three) within each panel. -->
-<!-- ## Automation -->
-<!-- We've already used some functions to automate our workflow. For instance, we directly imported the CSV files from their URLs rather than manually clicking, downloading, moving, and importing. We also applied selection helpers to select the columns we want to work with rather than individually typing their column names. This section introduces how to automate iterative work using a completely new example. -->
-<!-- ### Old Data, New `lm()` -->
-<!-- We use the famous [https://www.jstor.org/stable/1806062](Lalonde (1986)) data, which is a benchmark dataset among matching method articles. The outcome variable is workers' earnings in 1978 `re78`; the binary treatment is the participation of a employment training program (`treat`); we also have a battery of demographic covariates. We use `haven::read_dta()` to import the data from one of its repositories. Then, we save the names of our control variables as a vector for later use. -->
-<!-- Let's just use least squares to estimate the treatment effect. Instead of `lm()` in base R, we use `estimatr::lm_robust()`, which is tidier and faster. As the argument `se_type = "stata"` implies, by using `lm_robust`, we can have our model estimates and robust standard errors simultaneously rather than estimating model first and adjusting the variance-covariance matrix later. In the code below, we use the function `reformulate()` to write our regression equation down (`reformulate(c(x1, x2), y)` returns `y ~ x1 + x2`). `broom::tidy()` does a tidier job than `summary()`, so we can use the `tidyverse` approach to work with model estimates and statistics more easily. Here, we extract the treatment effect estimate and save it for later use. -->
-<!-- ### Task -->
-<!-- Some applied researchers use placebo test to show that their estimates are reflective of the actual treatment effect. They randomly generate and assign pseudo treatment (which is not expected to have any systematic relationship with the outcome variable) to observations in data, estimate the effect of pseudo treatment, and replicate the process many times. If the estimates of pseudo treatment are not centered around zero, then the estimated (actual) treatment effect might be questionable since if whatever enters the model have an effect, then there is nothing special about the (actual) treatment. In other words, it might be the case that the empirical model is just a "effect producer." -->
+## 5 Grouped Visualization
+
+This section introduces the `tidyverse` way of making grouped
+visualization. Specifically, we want a time-series plot showing the
+travel frequency change (`traffic`) by three `transportation_type` by 16
+cities (`region`).
+
+### `group and facet_wrap`
+
+If we simply used `geom_line(aes(date, traffic))`, then we would have 48
+lines wrapped together. To distinguish different `transportation_type`,
+we can use `transportation_type`-specific aesthetics. In the code below,
+three lines for each `transportation_type` are assigned to unique colors
+to make them mutually distinguishable (`color = transportation_type`).
+Alternatively, we can use `linetype = transportation_type` (straight,
+dotted, dashed, etc.), but given the three lines are close to each
+other, this is not the preferred one. It is important to note that this
+group setting must be inside of `aes()`. Similarly, we can apply this
+sort of grouping setting to other types of plots. If we do a scatter
+plot (`geom_point()`), for example, we can use different `shape` for
+different groups.
+
+We can then use `facet_wrap()` to have a multi-panel figure, in which
+each panel represents the group we set. Here, we specify `vars(region)`
+to let panels represent different `region`. Given we have 16 cities, 4 ×
+4 is a natural choice regarding how many should be along rows and
+columns. However, we are allowed to adjust these parameters by setting
+`nrow` or `ncol` inside of `facet_wrap()`.
+
+``` r
+uk_mobility_covid %>% ggplot() + 
+  geom_line(aes(date, traffic, group = transportation_type, color = transportation_type)) +
+  facet_wrap(vars(region)) +
+  scale_x_date(date_labels="%b %y") +
+  labs(
+    x = "", y = "", 
+    title = "Daily Travel Frequency Change during the Covid-19 Pandemic in the UK", 
+    subtitle = "Baseline (13 Jan 2020) = 100; Last Updated: 06 Aug 2021",
+    caption = "Source: Apple Mobility Trends Reports"
+  ) +
+  theme_minimal_hgrid() +
+  theme(
+    text = element_text(family = "Palatino", size = 22),
+    legend.title = element_blank(),
+    strip.background = element_blank()
+  )
+```
+
+<img src="ess_2021_tips_files/figure-gfm/facet_wrap-1.png" style="display: block; margin: auto;" />
+
+### `facet_grid`
+
+Compared to `facet_wrap()`, `facet_grid()` is able to visualize data by
+two group settings along two axes. In our case, it can plot by different
+`region` along columns and by different `transportation_type` by rows,
+or *vice versa*. Then, we do not need to use different aesthetics for
+different `transportation_type` and accordingly, there is only a single
+line (rather than three) within each panel.
+
+``` r
+uk_mobility_covid %>% ggplot() + 
+  geom_line(aes(date, traffic)) +
+  facet_grid(cols = vars(region), rows = vars(transportation_type)) +
+  scale_x_date(date_labels="%y", date_breaks = "1 year") +
+  labs(
+    x = "", y = "", 
+    title = "Daily Travel Frequency Change during the Covid-19 Pandemic in the UK", 
+    subtitle = "Baseline (13 Jan 2020) = 100; Last Updated: 06 Aug 2021",
+    caption = "Source: Apple Mobility Trends Reports"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Palatino", size = 22),
+    legend.title = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.x = element_text(angle = 315),
+    strip.text.y = element_text(angle = 0, vjust = 0.5),
+    strip.background = element_blank()
+  )
+```
+
+<img src="ess_2021_tips_files/figure-gfm/facet_grid-1.png" style="display: block; margin: auto;" />
