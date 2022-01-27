@@ -1,0 +1,4 @@
+lectures_past_slides/
+*.xlsx
+*.pdf
+.DS_Store

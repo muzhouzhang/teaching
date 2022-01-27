@@ -1,6 +1,6 @@
 ---
 title: "R Tips for the 2021 Essex Summer School"
-output: github_document
+output: html_document
 ---
 ```{r options, echo = FALSE, cache = FALSE}
 options(width = 200)
