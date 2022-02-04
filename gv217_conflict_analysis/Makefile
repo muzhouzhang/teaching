@@ -1,6 +1,9 @@
 wk17: wk17.tex
 	latexmk wk17.tex -pdf
 
+wk17_handout: wk17_handout.tex
+	latexmk wk17_handout.tex -pdf
+
 wk18: wk18.tex
 	latexmk wk18.tex -pdf
 
