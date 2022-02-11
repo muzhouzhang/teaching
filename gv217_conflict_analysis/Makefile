@@ -10,6 +10,12 @@ wk18: wk18.tex
 wk18_handout: wk18_handout.tex
 	latexmk wk18_handout.tex -pdf
 
+wk19: wk19.tex
+	latexmk wk19.tex -pdf
+
+wk19: wk19_handout.tex
+	latexmk wk19_handout.tex -pdf
+
 clean:
 	-rm -f *.aux
 	-rm -f *.log
