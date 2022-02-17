@@ -13,8 +13,14 @@ wk18_handout: wk18_handout.tex
 wk19: wk19.tex
 	latexmk wk19.tex -pdf
 
-wk19: wk19_handout.tex
+wk19_handout: wk19_handout.tex
 	latexmk wk19_handout.tex -pdf
+
+wk20: wk20.tex
+	latexmk wk20.tex -pdf
+
+wk20_handout: wk20_handout.tex
+	latexmk wk20_handout.tex -pdf
 
 clean:
 	-rm -f *.aux
