@@ -25,6 +25,15 @@ wk20_handout: wk20_handout.tex
 wk21: wk21.tex
 	latexmk wk21.tex -pdf
 
+wk21_handout: wk21_handout.tex
+	latexmk wk21_handout.tex -pdf
+
+wk22: wk22.tex
+	latexmk wk22.tex -pdf
+
+wk22_handout: wk22_handout.tex
+	latexmk wk22_handout.tex -pdf
+
 clean:
 	-rm -f *.aux
 	-rm -f *.log
