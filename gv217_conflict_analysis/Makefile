@@ -34,6 +34,12 @@ wk22: wk22.tex
 wk22_handout: wk22_handout.tex
 	latexmk wk22_handout.tex -pdf
 
+wk23: wk23.tex
+	latexmk wk23.tex -pdf
+
+wk23_handout: wk23_handout.tex
+	latexmk wk23_handout.tex -pdf
+
 clean:
 	-rm -f *.aux
 	-rm -f *.log
