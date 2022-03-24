@@ -46,6 +46,12 @@ wk24: wk24.tex
 wk24_handout: wk24_handout.tex
 	latexmk wk24_handout.tex -pdf
 
+wk25: wk25.tex
+	latexmk wk25.tex -pdflatex=lualatex -pdf
+
+wk25_handout: wk25_handout.tex
+	latexmk wk25_handout.tex -pdflatex=lualatex -pdf
+
 clean:
 	-rm -f *.aux
 	-rm -f *.log
