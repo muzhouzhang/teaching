@@ -1,0 +1,187 @@
+\documentclass{beamer}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usefonttheme{serif}
+\setbeamertemplate{navigation symbols}{
+\usebeamerfont{footline}
+\usebeamercolor[fg]{footline}
+\insertframenumber/\inserttotalframenumber{}
+}
+\setbeamerfont{frametitle}{size = \small}
+\usepackage{mathpazo}
+\usepackage{float}
+\usepackage[labelsep = colon]{caption}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{threeparttablex}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{dcolumn}
+\usepackage{pdfpages}
+\usepackage{ulem}
+
+\title{Introduction to R}
+\subtitle{Essex Summer School 2X}
+\author{Muzhou Zhang}
+\date{24 July 2022}
+
+\begin{document}
+\maketitle
+\setstretch{1.25}
+
+\begin{frame}{Contents}
+\begin{itemize}
+    \item basics: 1100--1215
+    \item data management: 1230--1515
+    \item descriptive \& statistical analysis: 1530--1700
+    \item Q\&A at the end of each session if time permits
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Basics}
+\framesubtitle{R}
+R is a programming language for statistical computing
+\begin{itemize}
+    \item commands, no pull-down menu
+    \item has its own strengths and limitations
+    \item package-dependent\\ flexibility\\ reliability and reproducibility
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Basics}
+\framesubtitle{RStudio}
+RStudio is an IDE for R
+\begin{itemize}
+    \item limited GUI
+    \item panes
+    \item numerous keyboard shortcuts
+    \item support for various script files
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Basics}
+\framesubtitle{Today's course}
+the tidyverse
+\begin{itemize}
+    \item popular in data science
+    \item readable and intuitive syntax
+    \item leapfrogging
+\end{itemize}
+\end{frame}    
+
+\begin{frame}{Basics}
+\framesubtitle{Getting started with R}
+\begin{itemize}
+    \item objects and ``types''
+    \item assign: \texttt{<-}
+    \item numeric, character, logical
+    \item more than one type of ``types''; objects have classes too
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Basics}
+\framesubtitle{Getting started with R}
+\begin{itemize}
+    \item functions and arguments
+    \item type conversion
+    \item concatenation, fundamental for automation: \texttt{c()}
+    \item vectorization\\ with vectorization, how do we multiply matrices in R?
+    \item packages: CRAN (stable release) and GitHub (development version)
+    \item pipes: \texttt{\%>\%} (the tidyverse) or \texttt{|>} (base R)
+\end{itemize}
+\end{frame}    
+
+\begin{frame}{Data management}
+\framesubtitle{Import}
+\begin{itemize}
+    \item use \texttt{load()} to import \texttt{.RData}\\ do we \texttt{save()} regularly?
+    \item use \texttt{haven} to import data in Stata, SPSS, or SAS format
+    \item \texttt{readr} (CSV etc.), \texttt{readxl} (MS Excel), and lots more
+    \item the example data is downloadable at: \texttt{https://tinyurl.com/ycu95adr}
+    \item working directory: \texttt{setwd()}\\ absolute path: \texttt{/Users/mz/Desktop/GitHub/teaching/intro\_r/ess\_intro\_r\_maliniak\_2013.dta}\\ relative path: \texttt{ess\_intro\_r\_maliniak\_2013.dta}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data management}
+\framesubtitle{Style}
+\begin{itemize}
+    \item use descriptive and short names for objects files
+    \item use\_snake\_case (there are also CamelCase and kebab-case)
+    \item use space as in regular English (except for the parentheses of function calls)
+    \item use sensible line breaks and indents
+    \item make code self-explanatory and comment important decisions
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data management}
+\framesubtitle{Example data: gender citation bias in IR}
+Maliniak, D., Powers, R., \& Walter, B. (2013). The Gender Citation Gap in International Relations. International Organization, 67(4): 889--922
+\begin{itemize}
+    \item data file modified for pedagogic purpose
+    \item outcome variable: number of citations of an article
+    \item explanatory variable: gender composition of author(s)\\ all female, mixed-gender, all male
+    \item now you have five minutes to have a look of the data
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data management}
+\framesubtitle{What's next}
+\begin{itemize}
+    \item \texttt{rename()}, \texttt{mutate()}, \texttt{filter()}, \texttt{drop\_na()}, \texttt{select()}
+    \item logical operators: \texttt{\&} (AND), \texttt{|} (OR), \texttt{!} (NOT)
+    \item conditional statements: \texttt{if\_else()} \sout{and the generalized \texttt{case\_when()}}
+    \item \texttt{c()} and \texttt{\%in\%}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data management}
+\framesubtitle{Rename \& create (replace) variables}
+\begin{itemize}
+    \item rename the outcome variable ``n\_cite''
+    \item create two continuous variables indicating article's age and its squared term, respectively
+    \item create a binary variable equals one if the first author from an American R1 university
+    \item create a binary variable equals one if the journal one of the Top 3 (\textit{APSR, AJPS, JOP})
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data management}
+\framesubtitle{Drop observations \& keep variables}
+\begin{itemize}
+    \item drop articles on philosophy of sciences, political theory, and ``others''
+    \item drop articles with a missing citation count
+    \item keep selected variables only
+    \item use pipes to connect everything
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Descriptive \& statistical analysis}
+\framesubtitle{\texttt{ggplot2}}
+\begin{itemize}
+    \item start with \texttt{ggplot(the\_data)}
+    \item add layer(s)
+    \item add/adjust details
+    \item we use \texttt{+} to connect different ``parts''
+    \item I usually do not caption figures with \texttt{ggplot2}, why?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Descriptive \& statistical analysis}
+\framesubtitle{summary statistics}
+\begin{itemize}
+    \item no esay way of summarizing data and exporting the table ideally
+    \item many packages are \LaTeX-centric
+    \item class conversion
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Descriptive \& statistical analysis}
+\framesubtitle{regression}
+\begin{itemize}
+    \item linear model (\texttt{lm}) and generalized linear models (\texttt{glm})
+    \item panel data analysis (\texttt{plm}), multilevel models (\texttt{lme4}), negative binomial and ordered logistic/probit regression (\texttt{MASS}), design-based regression (\texttt{estimatr})
+    \item presentation of results: table, coef plot, substantive effects
+\end{itemize}
+\end{frame}
+    
+\end{document}
