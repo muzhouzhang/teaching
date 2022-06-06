@@ -1,6 +1,5 @@
-Introduction to GIS, Geospatial Data, and Spatial Analysis/
 *.DS_Store
 *.xlsx
-gv217_conflict_analysis/lectures_past_slides/
-gv217_conflict_analysis/readings/
-gv217_conflict_analysis/*.pdf
+gv217_conflict_analysis/
+.vscode/
+data/
